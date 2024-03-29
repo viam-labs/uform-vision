@@ -17,7 +17,7 @@ To use this module, follow these instructions to [add a module from the Viam Reg
 
 Navigate to the **Config** tab of your robot’s page in [the Viam app](https://app.viam.com/).
 Click on the **Service** subtab and click **Create service**.
-Select the `vision` type, then select the `viam-labs:vision:moondream` model.
+Select the `vision` type, then select the `viam-labs:vision:uform` model.
 Enter a name for your vision service and click **Create**.
 
 On the new service panel, copy and paste the following attribute template into your vision service's **Attributes** box:
