@@ -1,34 +1,30 @@
-# uform modular service
+# uform modular vision service
 
 This module implements the [rdk vision API](https://github.com/rdk/vision-api) in a viam-labs:vision:uform model.
-With this model, you can...
 
-## Requirements
+This model leverages the [UForm vision language model](https://huggingface.co/unum-cloud/uform-gen2-qwen-500m) to allow for image classification and querying.
 
-_Add instructions here for any requirements._
-
-``` bash
-```
+The UForm model and inference will run locally, and therefore speed of inference is highly dependant on hardware.
 
 ## Build and Run
 
-To use this module, follow these instructions to [add a module from the Viam Registry](https://docs.viam.com/registry/configure/#add-a-modular-resource-from-the-viam-registry) and select the `rdk:vision:viam-labs:vision:uform` model from the [`viam-labs:vision:uform` module](https://app.viam.com/module/rdk/viam-labs:vision:uform).
+To use this module, follow these instructions to [add a module from the Viam Registry](https://docs.viam.com/registry/configure/#add-a-modular-resource-from-the-viam-registry) and select the `viam-labs:vision:uform` model from the [viam-labs uform-vision module](https://app.viam.com/module/viam-labs/uform-vision).
 
-## Configure your vision
+## Configure your vision service
 
 > [!NOTE]  
-> Before configuring your vision, you must [create a machine](https://docs.viam.com/manage/fleet/machines/#add-a-new-machine).
+> Before configuring your vision service, you must [create a machine](https://docs.viam.com/manage/fleet/machines/#add-a-new-machine).
 
 Navigate to the **Config** tab of your robot’s page in [the Viam app](https://app.viam.com/).
-Click on the **Components** subtab and click **Create component**.
-Select the `vision` type, then select the `viam-labs:vision:uform` model. 
-Enter a name for your vision and click **Create**.
+Click on the **Service** subtab and click **Create service**.
+Select the `vision` type, then select the `viam-labs:vision:moondream` model.
+Enter a name for your vision service and click **Create**.
 
-On the new component panel, copy and paste the following attribute template into your vision’s **Attributes** box:
+On the new service panel, copy and paste the following attribute template into your vision service's **Attributes** box:
 
 ```json
 {
-  TODO: INSERT SAMPLE ATTRIBUTES
+  "revision": "<optional model revision>"
 }
 ```
 
@@ -37,29 +33,40 @@ On the new component panel, copy and paste the following attribute template into
 
 ### Attributes
 
-The following attributes are available for `rdk:vision:viam-labs:vision:uform` visions:
+The following attributes are available for `viam-labs:vision:yolov8` model:
 
 | Name | Type | Inclusion | Description |
 | ---- | ---- | --------- | ----------- |
-| `todo1` | string | **Required** |  TODO |
-| `todo2` | string | Optional |  TODO |
+| `max_tokens` | number | optional |  Max tokens to return, default 256 |
 
-### Example Configuration
+### Example Configurations
 
 ```json
 {
-  TODO: INSERT SAMPLE CONFIGURATION(S)
+  "max_tokens": 128
 }
 ```
 
-### Next Steps
+## API
 
-_Add any additional information you want readers to know and direct them towards what to do next with this module._
-_For example:_ 
+The uform resource provides the following methods from Viam's built-in [rdk:service:vision API](https://python.viam.dev/autoapi/viam/services/vision/client/index.html)
 
-- To test your...
-- To write code against your...
+### get_classifications(image=*binary*, count)
 
-## Troubleshooting
+### get_classifications_from_camera(camera_name=*string*, count)
 
-_Add troubleshooting notes here._
+Note: if using this method, any cameras you are using must be set in the `depends_on` array for the service configuration, for example:
+
+```json
+      "depends_on": [
+        "cam"
+      ]
+```
+
+By default, the UForm model will be asked the question "describe this image".
+If you want to ask a different question about the image, you can pass that question as the extra parameter "question".
+For example:
+
+``` python
+uform.get_classifications(image, 1, extra={"question": "what is the person wearing?"})
+```
