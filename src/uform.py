@@ -111,8 +111,7 @@ class uform(Vision, Reconfigurable):
        prompt = "describe this image"
        if extra != None and extra.get('question') != None:
         prompt = extra['question']
-        if extra != None and extra.get('question') != None:
-            prompt = extra['question']
+
        inputs = self.processor(text=[prompt], images=[image], return_tensors="pt")
        with torch.inference_mode():
         output = self.model.generate(

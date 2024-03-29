@@ -1,0 +1,13 @@
+{
+  "module_id": "viam-labs:uform-vision",
+  "visibility": "public",
+  "url": "https://github.com/viam-labs/uform-vision",
+  "description": "A Viam vision service that provides image classifications and querying with the UForm generative vision model",
+  "models": [
+    {
+      "api": "rdk:service:vision",
+      "model": "viam-labs:vision:uform"
+    }
+  ],
+  "entrypoint": "run.sh"
+}
