@@ -1,0 +1,5 @@
+viam-sdk
+transformers
+pillow
+torch
+torchvision
