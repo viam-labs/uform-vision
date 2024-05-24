@@ -102,7 +102,7 @@ class uform(Vision, Reconfigurable):
         extra: Optional[Mapping[str, Any]] = None,
         timeout: Optional[float] = None,
     ) -> List[Classification]:
-        return await self.get_classifications(self.get_cam_image(camera_name), count, extra=extra)
+        return await self.get_classifications(await self.get_cam_image(camera_name), count, extra=extra)
 
     
     async def get_classifications(
