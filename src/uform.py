@@ -7,7 +7,6 @@ from PIL import Image
 from transformers import AutoModel, AutoProcessor
 import torch
 
-from viam.media.video import RawImage
 from viam.proto.common import PointCloudObject
 from viam.proto.service.vision import Classification, Detection
 from viam.resource.types import RESOURCE_NAMESPACE_RDK, RESOURCE_TYPE_SERVICE, Subtype
@@ -15,12 +14,15 @@ from viam.utils import ValueTypes
 
 from viam.module.types import Reconfigurable
 from viam.proto.app.robot import ComponentConfig
-from viam.proto.common import ResourceName, Vector3
+from viam.proto.common import ResourceName
 from viam.resource.base import ResourceBase
 from viam.resource.types import Model, ModelFamily
-from viam.components.camera import Camera
+from viam.components.camera import Camera, ViamImage
+from viam.media.utils.pil import viam_to_pil_image
 
-from viam.services.vision import Vision
+from viam.services.vision import Vision, CaptureAllResult
+from viam.proto.service.vision import GetPropertiesResponse
+
 from viam.logging import getLogger
 
 import time
@@ -65,6 +67,14 @@ class uform(Vision, Reconfigurable):
         self.processor = AutoProcessor.from_pretrained("unum-cloud/uform-gen2-qwen-500m", trust_remote_code=True)
         return
 
+    async def get_cam_image(
+        self,
+        camera_name: str
+    ) -> Image:
+        actual_cam = self.DEPS[Camera.get_resource_name(camera_name)]
+        cam = cast(Camera, actual_cam)
+        cam_image = await cam.get_image(mime_type="image/jpeg")
+        return viam_to_pil_image(cam_image)
     
     async def get_detections_from_camera(
         self, camera_name: str, *, extra: Optional[Mapping[str, Any]] = None, timeout: Optional[float] = None
@@ -75,7 +85,7 @@ class uform(Vision, Reconfigurable):
     
     async def get_detections(
         self,
-        image: Union[Image.Image, RawImage],
+        image: ViamImage,
         *,
         extra: Optional[Mapping[str, Any]] = None,
         timeout: Optional[float] = None,
@@ -92,16 +102,12 @@ class uform(Vision, Reconfigurable):
         extra: Optional[Mapping[str, Any]] = None,
         timeout: Optional[float] = None,
     ) -> List[Classification]:
-        
-        actual_cam = self.DEPS[Camera.get_resource_name(camera_name)]
-        cam = cast(Camera, actual_cam)
-        cam_image = await cam.get_image(mime_type="image/jpeg")
-        return await self.get_classifications(cam_image, count, extra=extra)
+        return await self.get_classifications(self.get_cam_image(camera_name), count, extra=extra)
 
     
     async def get_classifications(
         self,
-        image: Union[Image.Image, RawImage],
+        image: ViamImage,
         count: int,
         *,
         extra: Optional[Mapping[str, Any]] = None,
@@ -112,7 +118,7 @@ class uform(Vision, Reconfigurable):
        if extra != None and extra.get('question') != None:
         prompt = extra['question']
 
-       inputs = self.processor(text=[prompt], images=[image], return_tensors="pt")
+       inputs = self.processor(text=[prompt], images=[viam_to_pil_image(image)], return_tensors="pt")
        with torch.inference_mode():
         output = self.model.generate(
             **inputs,
@@ -170,3 +176,30 @@ class uform(Vision, Reconfigurable):
         """
         ...
 
+    async def capture_all_from_camera(
+        self,
+        camera_name: str,
+        return_image: bool = False,
+        return_classifications: bool = False,
+        return_detections: bool = False,
+        return_object_point_clouds: bool = False,
+        *,
+        extra: Optional[Mapping[str, Any]] = None,
+        timeout: Optional[float] = None,
+    ) -> CaptureAllResult:
+        result = CaptureAllResult()
+        result.image = await self.get_cam_image(camera_name)
+        result.classifications = await self.get_classifications(result.image, 1)
+        return result
+
+    async def get_properties(
+        self,
+        *,
+        extra: Optional[Mapping[str, Any]] = None,
+        timeout: Optional[float] = None,
+    ) -> GetPropertiesResponse:
+        return GetPropertiesResponse(
+            classifications_supported=True,
+            detections_supported=False,
+            object_point_clouds_supported=False
+        )
