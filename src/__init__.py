@@ -7,4 +7,4 @@ from viam.resource.registry import Registry, ResourceCreatorRegistration
 
 from .uform import uform
 
-Registry.register_resource_creator(Vision.SUBTYPE, uform.MODEL, ResourceCreatorRegistration(uform.new, uform.validate))
+Registry.register_resource_creator(Vision.API, uform.MODEL, ResourceCreatorRegistration(uform.new, uform.validate))
